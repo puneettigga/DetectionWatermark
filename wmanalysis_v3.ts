@@ -173,8 +173,7 @@ class WatermarkAnalyzer {
 
     if (count > 0){
       console.log("watermark present");
-    }
-    else {
+    } else {
       console.log("watermark absent");
     }
 
@@ -259,19 +258,20 @@ function loadImage(path:string): any{
 }
 
 function convertCVmatrix(mat:any): any{
-	let rw = mat.rows;
-	let col = mat.cols;
-	let simpleMat = [];
-	for (let i = 0; i<rw;i++){
-		let arr = [];
-		for (let j = 0; j < col; j++) {
-			arr.push(mat.at(i,j));
-		}
-		simpleMat.push(arr);
-	}
+  let rw = mat.rows;
+  let col = mat.cols;
+  let simpleMat = [];
+  for (let i = 0; i<rw;i++){
+    let arr = [];
+    for (let j = 0; j < col; j++) {
+      arr.push(mat.at(i,j));
+    }
+    simpleMat.push(arr);
+  }
 
-	return simpleMat;
+  return simpleMat;
 }
+
 console.log('reading ' + process.argv[2]);
 fs.readdir(process.argv[2], (err, files) => {
   let fpaths = files.map(fname => path.join(process.argv[2], fname));
@@ -280,11 +280,14 @@ fs.readdir(process.argv[2], (err, files) => {
 
   let wm = new WatermarkAnalyzer(imgArr, imgArr[0].rows, imgArr[0].cols);
   let wm_img = wm.extract_WM_outline();
-  let bb1 = wm.extract_BoundBox(wm_img, path);
-  console.log(bb1);
-
-  let bb3 = wm.method2(imgArr, path);
-  console.log(bb3);
+  let bb = wm.extract_BoundBox(wm_img, path);
+  if (bb[bb.length-1] > 0) {
+    bb = wm.method2(imgArr, path);
+    let ofpath = path.join(process.argv[2], 'bg_info.js');
+    fs.writeFile(ofpath, JSON.stringify(bb.slice(1, bb.length-1)), function (err) {
+      if (err) return console.log(err);
+    });
+  }
 });
 
 
