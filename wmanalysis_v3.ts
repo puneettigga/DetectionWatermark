@@ -173,8 +173,7 @@ class WatermarkAnalyzer {
 
     if (count > 0){
       console.log("watermark present");
-    }
-    else {
+    } else {
       console.log("watermark absent");
     }
 
@@ -210,7 +209,7 @@ class WatermarkAnalyzer {
   }
 
   // intersection of grayscale images to check the repeated patterns
-  public method2(imgArr:any , path:string): any {
+  public intersection(imgArr:any , path:string): any {
 
     let watermark = [];
 
@@ -259,32 +258,39 @@ function loadImage(path:string): any{
 }
 
 function convertCVmatrix(mat:any): any{
-	let rw = mat.rows;
-	let col = mat.cols;
-	let simpleMat = [];
-	for (let i = 0; i<rw;i++){
-		let arr = [];
-		for (let j = 0; j < col; j++) {
-			arr.push(mat.at(i,j));
-		}
-		simpleMat.push(arr);
-	}
+  let rw = mat.rows;
+  let col = mat.cols;
+  let simpleMat = [];
+  for (let i = 0; i<rw;i++){
+    let arr = [];
+    for (let j = 0; j < col; j++) {
+      arr.push(mat.at(i,j));
+    }
+    simpleMat.push(arr);
+  }
 
-	return simpleMat;
+  return simpleMat;
 }
+
 console.log('reading ' + process.argv[2]);
 fs.readdir(process.argv[2], (err, files) => {
-  let fpaths = files.map(fname => path.join(process.argv[2], fname));
-  console.log(fpaths);
-  let imgArr = fpaths.map(fpath => loadImage(fpath));
+  let re = new RegExp('(jpg|png)$', 'i')
+  files = files.filter(f => re.test(f)).map(f => path.join(process.argv[2], f));
+  let imgArr = files.map(f => loadImage(f));
 
   let wm = new WatermarkAnalyzer(imgArr, imgArr[0].rows, imgArr[0].cols);
   let wm_img = wm.extract_WM_outline();
-  let bb1 = wm.extract_BoundBox(wm_img, path);
-  console.log(bb1);
-
-  let bb3 = wm.method2(imgArr, path);
-  console.log(bb3);
+  let bb = wm.extract_BoundBox(wm_img, path);
+  if (bb[bb.length-1] > 0) {
+    bb = wm.intersection(imgArr, path);
+    let ofpath = path.join(process.argv[2], 'bg_info.js');
+    let rows = imgArr[0].rows;
+    let cols = imgArr[1].cols;
+    let output = [bb[1]/cols, bb[2]/rows, bb[3]/cols, bb[4]/rows];
+    fs.writeFile(ofpath, JSON.stringify(output), function (err) {
+      if (err) return console.log(err);
+    });
+  }
 });
 
 
